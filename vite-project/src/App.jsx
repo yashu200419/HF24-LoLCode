@@ -1,42 +1,32 @@
-// frontend/src/App.js
 import React, { useState } from 'react';
+import axios from 'axios';
 
 function App() {
-  const [file, setFile] = useState(null);
-  const [prediction, setPrediction] = useState(null);
+  const [image, setImage] = useState(null);
+  const [predictedImage, setPredictedImage] = useState(null);
 
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]);
   };
 
-  const handlePrediction = async () => {
+  const handleUpload = () => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('image', image);
 
-    try {
-      const response = await fetch('http://localhost:5000/predict', {
-        method: 'POST',
-        body: formData
+    axios.post('http://localhost:5000/upload', formData)
+      .then(response => {
+        setPredictedImage(response.data.predicted_image);
+      })
+      .catch(error => {
+        console.error('Error uploading image: ', error);
       });
-      const data = await response.json();
-      setPrediction(data.prediction);
-    } catch (error) {
-      console.error('Error predicting:', error);
-    }
   };
 
   return (
     <div>
-      <h1>Tree Detection</h1>
-      <input type="file" onChange={handleFileChange} />
-      <button onClick={handlePrediction}>Predict</button>
-      {prediction !== null && (
-        <div>
-          <h2>Prediction: {prediction}</h2>
-          {/* Display the image with prediction */}
-          <img src={URL.createObjectURL(file)} alt="Uploaded" />
-        </div>
-      )}
+      <input type="file" accept="image/*" onChange={handleImageChange} />
+      <button onClick={handleUpload}>Upload</button>
+      {predictedImage && <img src={predictedImage} alt="Predicted Image" />}
     </div>
   );
 }

@@ -1,44 +1,33 @@
-# backend/app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import torch
+import os
 from PIL import Image
-import torchvision.transforms as transforms
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO('src/best.pt') 
 
 app = Flask(__name__)
 CORS(app)
 
-# Load the PyTorch model
-model = torch.load("best.pt")
-model.eval()
 
-# Define image transformation
-transform = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image uploaded'}), 400
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'})
+    image = request.files['image']
+    image_path = os.path.join('uploads', image.filename)
+    image.save(image_path)
+    print(image_path)
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'})
+    results = model(image_path, save=True) 
 
-    try:
-        img = Image.open(file)
-        img = transform(img).unsqueeze(0)
-        with torch.no_grad():
-            output = model(img)
-            # Process output to get the number of trees predicted
-            prediction = output.argmax(1).item()
-        return jsonify({'prediction': prediction})
-    except Exception as e:
-        return jsonify({'error': str(e)})
+    predicted_image_path = os.path.join('runs/detect/predict', image.filename)
+
+    return jsonify({'predicted_image': predicted_image_path}), 200
 
 if __name__ == '__main__':
+    if not os.path.exists('uploads'):
+        os.makedirs('uploads')
     app.run(debug=True)
