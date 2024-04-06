@@ -10,7 +10,6 @@ model = YOLO('src/best.pt')
 app = Flask(__name__)
 CORS(app)
 
-
 @app.route('/upload', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
@@ -22,6 +21,30 @@ def upload_image():
     print(image_path)
 
     results = model(image_path, save=True) 
+
+    classes =[]
+
+    for result in results:
+        # Check if there are any detections
+            # Get detected objects bounding boxes
+        boxes= result.boxes.cpu().numpy()
+        ids = boxes.cls
+        classes.append(ids)  # xyxy format: (x1, y1, x2, y2)
+
+    f=0
+    s=0
+    for i in range(len(classes[0])):
+        if classes[0][i]==0:
+            f+=1
+        if classes[0][i]==2:
+            s+=1
+    print(f'Fir species:{f}')
+    print(f'spruce species:{s}')
+
+
+   # print(len(classes))
+   # print(classes)
+
 
     predicted_image_path = os.path.join('runs/detect/predict', image.filename)
 
