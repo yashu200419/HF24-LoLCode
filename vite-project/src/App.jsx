@@ -34,12 +34,12 @@
 
 // export default App;
 
-
 import Login from "./components/auth/login";
 import Register from "./components/auth/register";
 
 import Header from "./components/header";
 import Home from "./components/home";
+import Predict from "./components/predict";
 
 import { AuthProvider } from "./contexts/authContext";
 import {
@@ -66,6 +66,10 @@ function App() {
     {
       path: "/home",
       element: <Home />,
+    },
+    {
+      path: "/predict",
+      element: <Predict />,
     },
   ];
   let routesElement = useRoutes(routesArray);
