@@ -9,9 +9,10 @@ export const doSignInWithEmailAndPassword = (email, password) => {
     return signInWithEmailAndPassword(auth, email, password);
 };
 
-export const doSignInWIthGoogle = async() => {
+export const doSignInWithGoogle = async() => {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
+    // const user = result.user;
     // if u want to store extra properties in firestore, you can store it like below
     // result.<userproperty> = ...
     return result
