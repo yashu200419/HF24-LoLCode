@@ -47,8 +47,12 @@ def upload_image():
 
 
     predicted_image_path = os.path.join('runs/detect/predict', image.filename)
-
-    return jsonify({'predicted_image': predicted_image_path}), 200
+    response_data = {
+        'predicted_image': predicted_image_path,
+        'fir_count': f,
+        'spruce_count': s
+    }
+    return jsonify(response_data), 200
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):

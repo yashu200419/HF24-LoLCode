@@ -2,11 +2,16 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../contexts/authContext";
 import "../../App.css";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 function Predict() {
   const { currentUser } = useAuth();
   const [image, setImage] = useState(null);
   const [predictedImage, setPredictedImage] = useState(null);
+  const [firCount, setFirCount] = useState(0);
+  const [spruceCount, setSpruceCount] = useState(0);
+  const [loader, setloader] = useState(false);
 
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
@@ -20,10 +25,27 @@ function Predict() {
       .post("http://localhost:5000/upload", formData)
       .then((response) => {
         setPredictedImage(response.data.predicted_image);
+        setFirCount(response.data.fir_count); // Assuming the server returns the count of fir trees
+        setSpruceCount(response.data.spruce_count);
       })
       .catch((error) => {
         console.error("Error uploading image: ", error);
       });
+  };
+
+  const downloadPDF = () => {
+    const capture = document.querySelector(".actualPDF");
+
+    setloader(true);
+    html2canvas(capture).then((canvas) => {
+      const imgData = canvas.toDataURL("img/png");
+      const doc = new jsPDF("p", "mm", "a4");
+      const componentwidth = doc.internal.pageSize.getWidth();
+      const componentheight = doc.internal.pageSize.getHeight();
+      doc.addImage(imgData, "PNG", 0, 0, componentwidth, componentheight);
+      setloader(false);
+      doc.save("report.pdf");
+    });
   };
 
   return (
@@ -158,6 +180,13 @@ function Predict() {
                   </ol>
                 </nav>
                 <h2 className="text-white">Forest Analysis</h2>
+                <div className="text-2xl font-bold pt-14">
+                  Hello{" "}
+                  {currentUser.displayName
+                    ? currentUser.displayName
+                    : currentUser.email}
+                  , you are now logged in.
+                </div>
               </div>
             </div>
           </div>
@@ -178,7 +207,7 @@ function Predict() {
                   htmlFor="image"
                   className="custom-file-upload btn btn-warning upload-btn btn-lg my-1"
                 >
-                  <p>
+                  <p className="p-margin">
                     <input
                       type="file"
                       accept="image/*"
@@ -195,19 +224,17 @@ function Predict() {
                 >
                   Upload
                 </button>
-                {/* <button class="btn btn-warning upload-btn btn-lg my-1" onclick="generatePDF()">Generate PDF </button> */}
               </div>
               <br />
             </div>
           </div>
         </section>
         <br />
-        <section className="section-padding section-bg">
+        <section className="section-padding section-bg actualPDF">
           <div className="container">
             <div className="row">
               <div className="col-lg-12 col-12">
                 <h3 className="mb-4 pb-2">Statistics</h3>
-                //{" "}
                 {predictedImage && (
                   <img
                     src={predictedImage}
@@ -215,6 +242,8 @@ function Predict() {
                     className="imgtest"
                   />
                 )}
+                {predictedImage && <h3>Fir Count: {firCount}</h3>}
+                {predictedImage && <h3>Spruce Count: {spruceCount}</h3>}
               </div>
             </div>
           </div>
@@ -237,9 +266,10 @@ function Predict() {
                 {/* <button class="btn btn-warning upload-btn btn-lg my-1" type="submit"></button> */}
                 <button
                   className="btn btn-warning upload-btn btn-lg my-1"
-                  onclick="generatePDF()"
+                  onclick={downloadPDF}
+                  disabled={!(loader === false)}
                 >
-                  Generate PDF{" "}
+                  {loader ? <span>Downloading</span> : <span>Download</span>}
                 </button>
               </div>
               <br />
